@@ -16,21 +16,25 @@ public class Thought {
 			
 			while (true) {
 				c2 = (c3 + c1) / 2;
-				System.out.println(c1 + ", " + c2 + ", " + c3);
-				
-				int dist = c3 - c1;
-				if (dist < 2) {
-					break;
-				}
 				
 				//Find the middle distance.  Keep changing c if the current c is invalid
-				int distance = 0;
+				long distance = 0;
 				while (true) {
 					try {
 						distance = s.getDistance(toReturn, i, c2, parameters);
 						break;
 					} catch (InvalidNumberException e) {
 						c2 = e.getValue();
+						//Swapping c if necesary
+						if (c2 > c3) {
+						    int temp = c2;
+						    c2 = c3;
+						    c3 = temp;
+						} else if (c2 < c1) {
+						    int temp = c2;
+						    c2 = c1;
+						    c1 = temp;
+						}
 						continue;
 					}
 				}
@@ -40,7 +44,7 @@ public class Thought {
 				}
 				
 				//Same for largest
-				int twiceDistance = 0;
+				long twiceDistance = 0;
 				while (true) {
 					try {
 						twiceDistance = s.getDistance(toReturn, i, c3, parameters);
@@ -56,7 +60,7 @@ public class Thought {
 				}
 				
 				//And for smallest
-				int halfDistance = 0;
+				long halfDistance = 0;
 				while (true) {
 					try {
 						halfDistance = s.getDistance(toReturn, i, c1, parameters);
@@ -66,21 +70,25 @@ public class Thought {
 						continue;
 					}
 				}
-				System.out.println("@" + c1 + ", " + c2 + ", " + c3);
-				System.out.println("$" + halfDistance + ", " + distance + ", " + twiceDistance);
 				
 				if (halfDistance == 0) {
 					c2 = c1;
 					break;
 				}
 				
+				//Find the distance between the distances.  If it's small, then say it's a success
+				int dist = c3 - c1;
+				if (dist < 2) {
+					break;
+				}
+				
 				//Set the new c values depending on the distance
-				if (twiceDistance < 0) {
-					c1 = c3;
-					c3 += dist * 2;
-				} else if (halfDistance > 0) {
+				if (halfDistance > 0) {
 					c3 = c1;
 					c1 -= dist * 2;
+				} else if (twiceDistance < 0) {
+					c1 = c3;
+					c3 += dist * 2;
 				} else if (distance > 0) {
 					c3 = c2;
 				} else {
@@ -93,24 +101,34 @@ public class Thought {
 	}
 	
 	public static void main(String[] args) {
-		int sq = 25;
-		System.out.println(Arrays.toString(findInts(
-				new int[]{sq},
-				2, 1, sq,
+		int[] params = new int[]{6000};
+		long start = System.currentTimeMillis();
+		int[] results = findInts(
+				params,
+				1, 1, params[0],
 				new Searcher() {
 					@Override
-					public int getDistance(int[] currentNums, int index, int value, int[] parameters) throws InvalidNumberException {
-						if (value < 2) {
-							throw new InvalidNumberException(2);
+					public long getDistance(int[] currentNums, int index, int value, int[] parameters) throws InvalidNumberException {
+						//Something I did to find factors
+						/*
+						if (value < 5) {
+							throw new InvalidNumberException(5);
 						}
-						int total = value;
+						long total = value;
 						for (int i = 0; i < currentNums.length; i++) {
 							if (i != index) {
 								total *= currentNums[i];
 							}
 						}
 						return total - parameters[0];
+						*/
+						
+						//This solves a quadratic equation
+						return (((2 * value) + 15) * ((5 * value) - 1)) - parameters[0];
 					}
-				})));
+				});
+		System.out.println("Found the answer for " + Arrays.toString(params) + " in " + 
+	    (System.currentTimeMillis() - start) + " milliseconds");
+		System.out.println("The answer is " + Arrays.toString(results));
 	}
 }
